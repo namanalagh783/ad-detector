@@ -28,6 +28,7 @@ class SamplingConfig:
     # past a reasonable processing budget.
     max_frames_per_video: int = 400
 
+@dataclass
 class ASRConfig:
     model_size: str = "small"  # faster-whisper model size
     device: str = "cpu"
@@ -38,3 +39,23 @@ class ASRConfig:
     # config option exists because ASR was written in a sandbox that
     # could not reach huggingface.co at all -- see src/asr.py docstring).
     model_dir: str = ""
+
+@dataclass
+class VLMConfig:
+    # gemini-3.6-flash: free-tier eligible as of when this was written.
+    # Google's free-tier model list shifts over time (Pro lost free-tier
+    # access entirely in April 2026) -- if this stops being free, check
+    # https://ai.google.dev/gemini-api/docs/pricing for the current list.
+    model: str = "gemini-3.6-flash"
+    # Hard cap on VLM calls per video -- this, combined with only ever
+    # calling classify_candidates() on a pre-filtered subset of frames
+    # (never the full sample plan), is the actual mechanism keeping
+    # stats.estimated_cost_usd bounded. See DESIGN.md for what we'd cut
+    # first to go 10x cheaper (answer: scene-cut-only candidates with no
+    # corroborating ASR/OCR signal -- those are the least certain ones).
+    max_calls_per_video: int = 60
+    # $0 because this runs on Gemini's free tier -- accurate for now, but
+    # worth being honest in DESIGN.md that a free tier has rate-limit and
+    # availability trade-offs a paid tier wouldn't. Update this if you
+    # switch to a paid model or exceed free-tier quota.
+    est_cost_per_call_usd: float = 0.0
