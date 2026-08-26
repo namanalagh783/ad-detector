@@ -1,1 +1,35 @@
 commit.py
+# Python bytecode/cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Downloaded videos and pipeline-generated outputs -- large, reproducible
+# from code + a source URL, not source themselves
+data/videos/
+data/outputs/
+data/frames/
+data/audio/
+
+# Scratch output from test runs and intermediate fixture-generation
+# artifacts (our underscore-prefixed dirs/files, e.g. _ocr_test_out,
+# _ocr_control.png) -- regenerated fresh each run, not needed in git
+tests/fixtures/_*
+
+# Secrets -- never commit an API key
+.env
+*.env
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
