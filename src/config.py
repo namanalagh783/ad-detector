@@ -27,3 +27,14 @@ class SamplingConfig:
     # so a pathological video (cuts every second) can't silently blow
     # past a reasonable processing budget.
     max_frames_per_video: int = 400
+
+class ASRConfig:
+    model_size: str = "small"  # faster-whisper model size
+    device: str = "cpu"
+    compute_type: str = "int8"
+    # If set, load weights from this local directory instead of pulling
+    # from huggingface.co at runtime -- useful for reproducible offline
+    # runs, or in an environment with restricted network egress (this
+    # config option exists because ASR was written in a sandbox that
+    # could not reach huggingface.co at all -- see src/asr.py docstring).
+    model_dir: str = ""
