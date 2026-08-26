@@ -41,6 +41,7 @@ def test_detect_kind_from_url_reel():
 
 
 def test_detect_kind_from_url_unknown():
+    # a plain watch URL can't be VOD vs LIVE from shape alone -- must be None
     assert detect_kind_from_url("https://www.youtube.com/watch?v=abc123") is None
 
 
@@ -48,7 +49,8 @@ def test_ingest_local_file_real_metadata():
     asset = ingest_source(FIXTURE)
     assert isinstance(asset, MediaAsset)
     assert asset.platform == Platform.FILE
-    assert asset.kind == Kind.VOD
+    assert asset.kind == Kind.VOD  # no hint, no shape signal -> default
+    # real ffprobe values, not stubbed -- the fixture is a 6s synthetic clip
     assert 5.9 <= asset.duration_s <= 6.1
     assert asset.fps > 0
     assert asset.width == 640
@@ -61,17 +63,24 @@ def test_ingest_local_file_with_kind_hint():
 
 
 def test_ingest_local_file_as_instagram():
+    # manually-acquired Reel: local path + explicit platform hint
     asset = ingest_source(FIXTURE, platform_hint=Platform.INSTAGRAM, kind_hint=Kind.SHORT)
     assert asset.platform == Platform.INSTAGRAM
     assert asset.kind == Kind.SHORT
 
 
-def test_ingest_youtube_raises_not_implemented():
+def test_ingest_youtube_missing_url_fails_cleanly():
+    # Layer 3: YouTube download is real now, but this is a fake video ID
+    # that doesn't exist -- confirms yt-dlp errors surface as a normal
+    # exception instead of crashing weirdly or hanging. This does require
+    # network access (to learn that the video doesn't exist), so it's the
+    # one test in this file that needs internet -- everything else here
+    # is fully offline.
     try:
-        ingest_source("https://www.youtube.com/watch?v=abc123")
-    except NotImplementedError:
+        ingest_source("https://www.youtube.com/watch?v=this_id_does_not_exist_12345")
+    except Exception:
         return
-    raise AssertionError("expected NotImplementedError for YouTube URL at this layer")
+    raise AssertionError("expected an exception for a nonexistent YouTube video ID")
 
 
 def test_ingest_missing_file_raises():
@@ -93,7 +102,7 @@ CHECKS = [
     ("ingest_source: real ffprobe metadata from local file", test_ingest_local_file_real_metadata),
     ("ingest_source: kind_hint overrides default", test_ingest_local_file_with_kind_hint),
     ("ingest_source: local file as manually-acquired Reel", test_ingest_local_file_as_instagram),
-    ("ingest_source: YouTube URL raises NotImplementedError (expected, layer 3)", test_ingest_youtube_raises_not_implemented),
+    ("ingest_source: nonexistent YouTube ID fails cleanly (needs network)", test_ingest_youtube_missing_url_fails_cleanly),
     ("ingest_source: missing local file raises FileNotFoundError", test_ingest_missing_file_raises),
 ]
 
