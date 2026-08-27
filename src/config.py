@@ -59,3 +59,16 @@ class VLMConfig:
     # availability trade-offs a paid tier wouldn't. Update this if you
     # switch to a paid model or exceed free-tier quota.
     est_cost_per_call_usd: float = 0.0
+
+@dataclass
+class Config:
+    """Bundles the three per-stage configs into one object pipeline.py
+    can pass around, so a single caller (or a future CLI flag) can swap
+    all settings for a video at once rather than threading three separate
+    config objects through every function signature."""
+    sampling: SamplingConfig = field(default_factory=SamplingConfig)
+    asr: ASRConfig = field(default_factory=ASRConfig)
+    vlm: VLMConfig = field(default_factory=VLMConfig)
+
+
+CONFIG = Config()
