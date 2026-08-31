@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Ad Segment Viewer</title>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: system-ui, sans-serif; background:#111; color:#eee; margin:0; padding:24px; }
+  h1 { font-size:18px; margin:0 0 16px; }
+  .controls { display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+  .controls label { background:#222; border:1px solid #444; padding:8px 12px; border-radius:6px; cursor:pointer; font-size:13px; }
+  .controls input[type=file] { display:none; }
+  #status { font-size:13px; color:#999; margin-bottom:16px; }
+  video { width:100%; max-width:900px; display:block; background:#000; border-radius:6px; }
+  .seekbar { position:relative; width:100%; max-width:900px; height:20px; background:#222; border-radius:4px; margin-top:8px; cursor:pointer; overflow:hidden; }
+  .seekbar .segment { position:absolute; top:0; bottom:0; opacity:0.85; }
+  .seekbar .segment:hover { opacity:1; outline:1px solid #fff; }
+  .playhead { position:absolute; top:0; bottom:0; width:2px; background:#fff; pointer-events:none; }
+  table { border-collapse:collapse; margin-top:20px; width:100%; max-width:900px; font-size:13px; }
+  th, td { text-align:left; padding:6px 10px; border-bottom:1px solid #333; }
+  tr.seg-row { cursor:pointer; }
+  tr.seg-row:hover { background:#1c1c1c; }
+  .badge { padding:2px 6px; border-radius:4px; font-size:11px; color:#000; }
+</style>
+</head>
+<body>
+  <h1>Ad Segment Viewer</h1>
+  <div class="controls">
+    <label>Load video <input type="file" id="videoInput" accept="video/*"></label>
+    <label>Load result JSON <input type="file" id="jsonInput" accept="application/json,.json"></label>
+  </div>
+  <div id="status">Load a video file and its matching AdDetectionResult JSON to begin.</div>
+
+  <video id="player" controls></video>
+  <div class="seekbar" id="seekbar"><div class="playhead" id="playhead"></div></div>
+
+  <table id="segTable" style="display:none">
+    <thead><tr><th>#</th><th>Start</th><th>End</th><th>Type</th><th>Brand</th><th>Confidence</th><th>Description</th></tr></thead>
+    <tbody id="segBody"></tbody>
+  </table>
+
+<script src="logic.js"></script>
+<script>
+let currentResult = null;
+
+const player = document.getElementById('player');
+const seekbar = document.getElementById('seekbar');
+const playhead = document.getElementById('playhead');
+const status = document.getElementById('status');
+const segTable = document.getElementById('segTable');
+const segBody = document.getElementById('segBody');
+
+document.getElementById('videoInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  player.src = URL.createObjectURL(file);
+  status.textContent = `Video loaded: ${file.name}`;
+});
+
+document.getElementById('jsonInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      currentResult = JSON.parse(reader.result);
+      renderSegments();
+      status.textContent = `Loaded ${currentResult.segments.length} segment(s) for ${currentResult.source.url}`;
+    } catch (err) {
+      status.textContent = `Could not parse JSON: ${err.message}`;
+    }
+  };
+  reader.readAsText(file);
+});
+
+function renderSegments() {
+  seekbar.querySelectorAll('.segment').forEach(el => el.remove());
+  segBody.innerHTML = '';
+  if (!currentResult || !currentResult.source.duration_s) return;
+
+  const duration = currentResult.source.duration_s;
+  currentResult.segments.forEach((seg, i) => {
+    const { left, width } = segmentToBarStyle(seg, duration);
+    const el = document.createElement('div');
+    el.className = 'segment';
+    el.style.left = left + '%';
+    el.style.width = width + '%';
+    el.style.background = AD_TYPE_COLORS[seg.ad_type] || '#b2bec3';
+    el.title = `${seg.ad_type} (${seg.start_s}s-${seg.end_s}s): ${seg.description}`;
+    el.addEventListener('click', (ev) => { ev.stopPropagation(); player.currentTime = seg.start_s; player.play(); });
+    seekbar.appendChild(el);
+
+    const row = document.createElement('tr');
+    row.className = 'seg-row';
+    row.innerHTML = `
+      <td>${i + 1}</td>
+      <td>${seg.start_s.toFixed(1)}s</td>
+      <td>${seg.end_s.toFixed(1)}s</td>
+      <td><span class="badge" style="background:${AD_TYPE_COLORS[seg.ad_type] || '#b2bec3'}">${seg.ad_type}</span></td>
+      <td>${seg.brand || '-'}</td>
+      <td>${(seg.confidence * 100).toFixed(0)}%</td>
+      <td>${seg.description}</td>
+    `;
+    row.addEventListener('click', () => { player.currentTime = seg.start_s; player.play(); });
+    segBody.appendChild(row);
+  });
+  segTable.style.display = currentResult.segments.length ? 'table' : 'none';
+}
+
+seekbar.addEventListener('click', (e) => {
+  if (!player.duration) return;
+  const rect = seekbar.getBoundingClientRect();
+  const frac = (e.clientX - rect.left) / rect.width;
+  player.currentTime = frac * player.duration;
+});
+
+player.addEventListener('timeupdate', () => {
+  if (!player.duration) return;
+  playhead.style.left = (player.currentTime / player.duration) * 100 + '%';
+});
+</script>
+</body>
+</html>

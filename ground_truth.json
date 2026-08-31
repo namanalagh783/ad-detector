@@ -1,0 +1,47 @@
+{
+  "longform_1": {
+    "source": {
+      "url": "https://www.youtube.com/watch?v=ujFWRFYLGjY",
+      "platform": "youtube",
+      "kind": "vod",
+      "duration_s": 0.0
+    },
+    "segments": []
+  },
+  "short_1": {
+    "source": {
+      "url": "https://www.youtube.com/shorts/Ve0zdhTQA4U",
+      "platform": "youtube",
+      "kind": "short",
+      "duration_s": 63.9
+    },
+    "segments": []
+  },
+  "live_1": {
+    "source": {
+      "url": "https://www.youtube.com/watch?v=s0LLVQeMmtU",
+      "platform": "youtube",
+      "kind": "live",
+      "duration_s": 0.0
+    },
+    "segments": []
+  },
+  "reel_1": {
+    "source": {
+      "url": "https://www.instagram.com/reel/DJl6-v8oufg",
+      "platform": "instagram",
+      "kind": "short",
+      "duration_s": 0.0
+    },
+    "segments": []
+  },
+  "reel_2": {
+    "source": {
+      "url": "https://www.instagram.com/reel/Db78RoIuOyl/",
+      "platform": "instagram",
+      "kind": "short",
+      "duration_s": 0.0
+    },
+    "segments": []
+  }
+}

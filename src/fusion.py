@@ -111,10 +111,10 @@ def _snap_to_scene_cuts(start_s: float, end_s: float, scene_cuts: list[float]) -
 
 
 def _classify_ad_type(c: _Candidate) -> AdType:
-    """Priority ruleset -- see module docstring. First match wins."""
+    
     if c.has_launch or c.has_cta:
         return AdType.MIDROLL_SPONSOR_READ
-    if c.has_ocr_ad_text and not c.has_vlm_ad_visual:
+    if c.has_ocr_ad_text:
         return AdType.BUMPER
     if c.has_vlm_ad_visual:
         return AdType.PRODUCT_PLACEMENT
