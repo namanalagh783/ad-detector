@@ -30,7 +30,7 @@ class SamplingConfig:
 
 @dataclass
 class ASRConfig:
-    model_size: str = "small"  # faster-whisper model size
+    model_size: str = "tiny"  # faster-whisper model size
     device: str = "cpu"
     compute_type: str = "int8"
     # If set, load weights from this local directory instead of pulling
